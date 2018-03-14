@@ -1,6 +1,7 @@
 =begin
 	Created by Cailin Pitt on 02/16/2015
-
+	Ported for UC by Dane Sowers on 3/14/2018
+	
 	Ruby script that retrieves crime information between days specified by user, then saves information into textfile that can be used by analytics.rb.
 =end
 

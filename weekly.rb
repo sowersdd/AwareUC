@@ -1,5 +1,6 @@
 =begin
 	Created by Cailin Pitt on 12/08/2015
+	Ported for UC by Dane Sowers on 3/14/2018
 	
 	Ruby script that webscrapes crime information from the Columbus PD and the OSU PD's online logs and emails it to users in a weekly report.
 =end

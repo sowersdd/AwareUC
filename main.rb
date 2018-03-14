@@ -1,5 +1,6 @@
 =begin
 	Created by Cailin Pitt on 10/15/2015
+	Ported for UC by Dane Sowers on 3/14/2018
 	
 	Ruby script that webscrapes crime information from the Columbus PD and the OSU PD's online logs and emails it to users.
 =end
@@ -231,22 +232,22 @@ rescue
 		end
 	end
 end
-mail = Mail.new({
-		:to => 'awareosulist@googlegroups.com',
-		:from => 'awareosu@gmail.com',
-		:subject => "AwareOSU - #{yesterdayWithDay}"
-	});
+# mail = Mail.new({
+# 		:to => 'awareosulist@googlegroups.com',
+# 		:from => 'awareosu@gmail.com',
+# 		:subject => "AwareOSU - #{yesterdayWithDay}"
+# 	});
 
-mail.attachments['AwareOSULogo.png'] = File.read('/home/pi/Documents/AwareOSU/images/AwareOSULogo.png')
-pic = mail.attachments['AwareOSULogo.png']
+# mail.attachments['AwareOSULogo.png'] = File.read('/home/pi/Documents/AwareOSU/images/AwareOSULogo.png')
+# pic = mail.attachments['AwareOSULogo.png']
 
-html_part = Mail::Part.new do
-		 content_type 'text/html; charset=UTF-8'
-		 body "<center><img src='cid:#{pic.cid}'></center>" + crimeHTML + '<br><p>Best,</p><p>AwareOSU</p><br><br><p>P.S. Please visit this <a href="http://goo.gl/forms/n3q6D53TT3">link</a> to subscribe/unsubscribe.</p>'
-	end
-	# Insert email body into mail object
+# html_part = Mail::Part.new do
+# 		 content_type 'text/html; charset=UTF-8'
+# 		 body "<center><img src='cid:#{pic.cid}'></center>" + crimeHTML + '<br><p>Best,</p><p>AwareOSU</p><br><br><p>P.S. Please visit this <a href="http://goo.gl/forms/n3q6D53TT3">link</a> to subscribe/unsubscribe.</p>'
+# 	end
+# 	# Insert email body into mail object
 
-mail.html_part  = html_part
-mail.deliver!
+# mail.html_part  = html_part
+# mail.deliver!
 # Deliver email
 # Send crimes to users
