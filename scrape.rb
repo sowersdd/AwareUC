@@ -13,9 +13,8 @@ require 'mechanize'
 # Nokogiri gets the website data that could be read later on.
 require 'nokogiri'
 
-# Need Watir gem because there are AJAX requests on the SpotCrime page
-# NOTE: Make sure to install chromedriver 2.25 (http://chromedriver.storage.googleapis.com/index.html?path=2.25/)
-require 'watir'
+# Need HTTParty gem for making requests to CPD API
+require 'httparty'
 
 # resolv-replace.rb is more for testing, supplies nice error statements in case this script runs into network issues
 require 'resolv-replace.rb'
@@ -32,59 +31,44 @@ agent.read_timeout = 60
 # Chose Safari because I like Macs
 agent.user_agent_alias = "Mac Safari"
 
-browser = Watir::Browser.new
-
 # If website is down, we'll retry visiting it three times.
 retries = 0
 websiteDown = false
 
-# This array contains the districts we want to get crime info from
-neighborhoodArray = [ 'clifton', 'corryville', 'cuf' ]
-
 mapURL = ""
 crimeNum = 0
 
-for i in 0...neighborhoodArray.length
-	# Sleep between each request
-	sleep 4
-	begin
-		websiteURL = "https://spotcrime.com/oh/cincinnati/locationPlaceholder"
-		# Insert search info into URL
-		websiteURL.gsub!('locationPlaceholder', neighborhoodArray[i])
-		# Try to direct to SpotCrime report website
-		browser.goto(websiteURL)
-	# Rescue from HTTP GET request to SpotCrime Site
-	rescue
-		if retries < 3
-			retries += 1
-			puts "Request #{retries} to SpotCrime site failed, trying again"
-			sleep 5
-			retry
-		else
-			websiteDown = true
-			puts "SpotCrime Site unavailable, skipping"
-			break
-		end
-	# Successful load of SpotCrime site
+begin
+	websiteURL = "https://data.cincinnati-oh.gov/resource/cxea-umgx.json?$where=closed_time_incident > '2018-03-25T00:00:00.000' AND closed_time_incident < '2018-03-26T00:00:00.000'  AND neighborhood in ('CLIFTON', 'CUF', 'CORRYVILLE') AND (disposition_text LIKE '%25ARREST%25' OR disposition_text LIKE '%25OFFENSE%25' OR disposition_text LIKE '%25THEFT%25') AND (incident_type_id NOT IN ('SS', 'PRIS', 'ST', 'WANT'))"
+	# Try to direct to CPD API
+	response = HTTParty.get(websiteURL)
+	json_response = response.parsed_response
+# Rescue from HTTP GET request to SpotCrime Site
+rescue
+	if retries < 3
+		retries += 1
+		puts "Request #{retries} to CPD API failed, trying again"
+		sleep 5
+		retry
 	else
-		resultPage = Nokogiri::HTML(browser.html)
-		crime_blocks = resultPage.css("div.crime-list")
-		for j in 0...crime_blocks.length
-			crimes_in_block = crime_blocks[j].css("a")
-			for k in 0...crimes_in_block.length
-				crime_date = Date.strptime(crimes_in_block[k].css('.crime-date').text, '%m/%d/%Y')
-				if crime_date >= yesterday
-					puts "{"
-					puts "\tDetail Link: #{crimes_in_block[k]['href']}"
-					puts "\tCrime Type: #{crimes_in_block[k].css('h4').text}"
-					puts "\tDate: #{crime_date}"
-					puts "\tAddress #{crimes_in_block[k].css('.crime-address').text}"
-					puts "}"
-				else
-					break
-				end
-			end
-		end
+		websiteDown = true
+		puts "CPD API unavailable, skipping"
+	end
+# Successful load of CPD API
+else
+	for i in 0...json_response.length
+		crime = json_response[i]
+		crime_date = DateTime.parse(crime['closed_time_incident'])
+		description = crime['incident_type_desc']
+		description.gsub!(" J/O OR IN PROGRESS", "")
+		description.gsub!(" REPORT", "")
+		description.gsub!(" J/O", "")
+		puts "{"
+		puts "\tEvent Number: #{crime['event_number']}"
+		puts "\tCrime Type: #{description}"
+		puts "\tDate: #{crime_date.strftime("%m/%d/%Y")}"
+		puts "\tAddress: #{crime['address_x']}"
+		puts "}"
 	end
 end
 
