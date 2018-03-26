@@ -4,7 +4,7 @@
 	Edited by Will Sloan on 3/9/2016
 	Ported for UC by Dane Sowers on 3/14/2018
 
-	Ruby script that webscrapes crime information from the Columbus PD and the UC PD's online logs and emails it to users.
+	Ruby script that webscrapes crime information from the SpotCrime and UCPD online logs and emails it to users.
 =end
 
 # Mechanize gets the website and transforms into HTML file.
@@ -22,8 +22,7 @@ require 'resolv-replace.rb'
 require 'byebug'
 
 # Get yesterday's date
-# yesterday = Date.today.prev_day
-yesterday = Date.parse("March 15, 2018")
+yesterday = Date.today.prev_day
 
 # Initialize new Mechanize agent
 agent = Mechanize.new
@@ -41,7 +40,6 @@ websiteDown = false
 
 # This array contains the districts we want to get crime info from
 neighborhoodArray = [ 'clifton', 'corryville', 'cuf' ]
-
 
 mapURL = ""
 crimeNum = 0
@@ -103,32 +101,32 @@ begin
 	
 	page = agent.post "http://www.uc.edu/webapps/publicsafety/policelog2.aspx", query, { "Content-Type" => "application/x-www-form-urlencoded" }
 	# Rescue failure of POST to UC Police Site
-	rescue
-		if retries < 3
-			retries += 1
-			puts "Request #{retries} to UC site failed, trying again"
-			sleep 5
-			retry
-		else
-			websiteDown = true
-			puts "UC Site unavailable, skipping"
-		end
+rescue
+	if retries < 3
+		retries += 1
+		puts "Request #{retries} to UC site failed, trying again"
+		sleep 5
+		retry
 	else
-		uc_crimes = Nokogiri::HTML(page.body).css("table").css("td")
-		if (uc_crimes.length / 8) == 0
-			puts "No UC crimes"
-		else
-			#Else there were crimes, extract and add to resuls
-			i = 7
-			while i < uc_crimes.length do
-				puts "{"
-				puts "\tReport Number: #{uc_crimes[i + 2].text}"
-				puts "\tCampus: #{uc_crimes[i].text}"
-				puts "\tIncident Type: #{uc_crimes[i + 3].text}"
-				puts "\tLocation: #{uc_crimes[i + 5].text}"
-				puts "\tDescription: #{uc_crimes[i + 4].text}"
-				puts "}"
-				i += 7
-			end
+		websiteDown = true
+		puts "UC Site unavailable, skipping"
+	end
+else
+	uc_crimes = Nokogiri::HTML(page.body).css("table").css("td")
+	if (uc_crimes.length / 8) == 0
+		puts "No UC crimes"
+	else
+		#Else there were crimes, extract and add to resuls
+		i = 7
+		while i < uc_crimes.length do
+			puts "{"
+			puts "\tReport Number: #{uc_crimes[i + 2].text}"
+			puts "\tCampus: #{uc_crimes[i].text}"
+			puts "\tIncident Type: #{uc_crimes[i + 3].text}"
+			puts "\tLocation: #{uc_crimes[i + 5].text}"
+			puts "\tDescription: #{uc_crimes[i + 4].text}"
+			puts "}"
+			i += 7
 		end
 	end
+end
