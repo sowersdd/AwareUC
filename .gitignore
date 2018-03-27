@@ -31,3 +31,6 @@ Gemfile.lock
 
 #Ignore byebug log
 .byebug*
+
+#Ignore test HTML output
+test.html

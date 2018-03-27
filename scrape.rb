@@ -4,7 +4,7 @@
 	Edited by Will Sloan on 3/9/2016
 	Ported for UC by Dane Sowers on 3/14/2018
 
-	Ruby script that webscrapes crime information from the SpotCrime and UCPD online logs and emails it to users.
+	Ruby script that webscrapes crime information from the CPD API and UCPD online logs and emails it to users.
 =end
 
 # Mechanize gets the website and transforms into HTML file.
@@ -43,7 +43,7 @@ begin
 	# Try to direct to CPD API
 	response = HTTParty.get(websiteURL)
 	json_response = response.parsed_response
-# Rescue from HTTP GET request to SpotCrime Site
+# Rescue from HTTP GET request to CPD API
 rescue
 	if retries < 3
 		retries += 1
