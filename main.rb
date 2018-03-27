@@ -34,6 +34,7 @@ agent.user_agent_alias = "Mac Safari"
 crimeHTML = ""
 
 passArray = IO.readlines('/Users/Dane/Documents/p')
+key = passArray[1].delete!("\n")
 
 options = { :address      			=> "smtp.gmail.com",
           :port                 => 587,
@@ -48,7 +49,6 @@ Mail.defaults do
 end
 
 # If website is down, we'll retry visiting it three times.
-# key = passArray[1].delete!("\n")
 crimeTableInfo = ""
 websiteDown = false
 retries = 3
@@ -57,7 +57,7 @@ mapURL = "<img src = 'https://maps.googleapis.com/maps/api/staticmap?zoom=13&cen
 offCampusArray = []
 
 begin
-websiteURL = "https://data.cincinnati-oh.gov/resource/cxea-umgx.json?$where=closed_time_incident > '2018-03-25T00:00:00.000' AND closed_time_incident < '2018-03-26T00:00:00.000'  AND neighborhood in ('CLIFTON', 'CUF', 'CORRYVILLE') AND (disposition_text LIKE '%25ARREST%25' OR disposition_text LIKE '%25OFFENSE%25' OR disposition_text LIKE '%25THEFT%25') AND (incident_type_id NOT IN ('SS', 'PRIS', 'ST', 'WANT'))"
+websiteURL = "https://data.cincinnati-oh.gov/resource/cxea-umgx.json?$where=closed_time_incident > '#{yesterday.strftime('%Y-%m-%dT00:00:00.000')}' AND closed_time_incident < '#{yesterday.strftime('%Y-%m-%dT23:59:59.999')}'  AND neighborhood in ('CLIFTON', 'CUF', 'CORRYVILLE') AND (disposition_text LIKE '%25ARREST%25' OR disposition_text LIKE '%25OFFENSE%25' OR disposition_text LIKE '%25THEFT%25') AND (incident_type_id NOT IN ('SS', 'PRIS', 'ST', 'WANT', 'INV', 'WAR'))"
 # Try to direct to CPD API
 response = HTTParty.get(websiteURL)
 json_response = response.parsed_response
@@ -84,7 +84,6 @@ else
 		crime_info = Hash.new 
 		crime_info["event_number"] = crime['event_number']
 		crime_info["crime_type"] = description
-		crime_info["crime_date"] = crime_date.strftime("%m/%d/%Y")
 		crime_info["address"] = crime['address_x']
 		crime_info["latitude"] = crime['latitude_x']
 		crime_info["longitude"] = crime['longitude_x']
@@ -97,7 +96,6 @@ if offCampusArray.length > 0
 		crime = offCampusArray[m]
 		crimeTableInfo += '<tr>'
 		crimeTableInfo += '<td>' + (m + 1).to_s + '</td>'
-		crimeTableInfo += '<td>' + crime['crime_date'] + '</td>'
 		crimeTableInfo += '<td>' + crime['crime_type'] + '</td>'
 		crimeTableInfo += '<td>' + crime['address'] + '</td>'
 		crimeTableInfo += '<td>' + crime['event_number'] + '</td>'
@@ -109,11 +107,10 @@ end
 
 if offCampusArray.size > 0
 	# Add information to result if there were off-campus crimes
-	# mapURL += "&maptype=terrain&key=" + key
-	mapURL += "&maptype=terrain ' />"
+	mapURL += "&maptype=terrain&key=" + key + "' />"
 	crimeHTML += mapURL
 	crimeHTML += "<h1>#{offCampusArray.size} Off-campus crimes for #{yesterdayWithDay}</h1>"
-	crimeHTML += '<table style="width:80%;text-align: left;" cellpadding="10"><tbody><tr><th>Number on Map</th><th>Date</th><th>Description</th><th>Location</th><th>Event Number</th></tr>'
+	crimeHTML += '<table style="width:80%;text-align: left;" cellpadding="10"><tbody><tr><th>Number on Map</th><th>Description</th><th>Location</th><th>Event Number</th></tr>'
 	crimeHTML += crimeTableInfo
 	crimeHTML += '</tbody></table>'
 elsif  ((offCampusArray.size == 0) && (websiteDown == false))
@@ -192,8 +189,7 @@ if on_campus_array.size > 0
 		end
 	end
 	# Insert on-campus crime information into table
-	# mapURL += "&maptype=terrain&key=" + key
-	mapURL += "&maptype=terrain' />"
+	mapURL += "&maptype=terrain&key=" + key + "' />"
 	crimeHTML += mapURL
 	crimeHTML += crimeTable
 	crimeHTML += '</tbody></table>'
@@ -214,7 +210,7 @@ pic = mail.attachments['AwareOSULogo.png']
 
 html_part = Mail::Part.new do
 		 content_type 'text/html; charset=UTF-8'
-		 body "<center><img src='cid:#{pic.cid}'></center>" + crimeHTML + '<p>Best,</p><p>AwareOSU</p><br><p>P.S. Please visit this <a href="http://goo.gl/forms/n3q6D53TT3">link</a> to subscribe/unsubscribe.</p>'
+		 body "<center><img src='cid:#{pic.cid}'></center>" + crimeHTML + '<br><p>Best,</p><p>AwareOSU</p><br><p>P.S. Please visit this <a href="http://goo.gl/forms/n3q6D53TT3">link</a> to subscribe/unsubscribe.</p>'
 	end
 	# Insert email body into mail object
 
